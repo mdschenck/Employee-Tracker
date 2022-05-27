@@ -7,15 +7,15 @@ const app = express();
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
-const db = mysql.createConnection(
-  {
-    host: "localhost",
-    user: "root",
-    password: "eddieolive889",
-    database: "movie_db",
-  },
-  console.log(`Connected to the books_db database.`)
-);
+// const db = mysql.createConnection(
+//   {
+//     host: "localhost",
+//     user: "root",
+//     password: "",
+//     database: "employees_db",
+//   },
+//   console.log(`Connected to the employees_db database.`)
+// );
 
 // db.query(
 //   "SELECT COUNT(id) AS total_count FROM favorite_books GROUP BY in_stock",

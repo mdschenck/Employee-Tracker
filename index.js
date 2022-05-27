@@ -1,23 +1,205 @@
-const Engineer = require("./lib/Engineer");
-const Designer = require("./lib/Designer");
-const Supervisor = require("./lib/Supervisor");
-const Intern = require("./lib/Intern");
-
-// const render = require("./src/pgTemplate");
+const Employee = require("./lib/Employee");
+// const Role = require("./lib/Role");
+// const Department = require("./lib/Department");
 
 const inquirer = require("inquirer");
 const fs = require("fs");
 const mysql = require("mysql2");
 
+// const teamMembers = {
+//   manager: null,
+//   engineers: [],
+//   interns: [],
+// };
 
-const teamMembers = {
-  manager: null,
-  engineers: [],
-  interns: [],
-};
+// const idArray = [,];
 
-const idArray = [,];
+// INIT function calls initial prompt on load and delegates functions based on input
 
+function init() {
+  inquirer
+    .prompt([
+      {
+        type: "list",
+        name: "choice",
+        message: `\n
+*******************************\n
+|        <O  -^u^-   O>       |\n
+|       EMPLOYEE TRACKER      |\n
+|         by: Michael S       |\n
+*******************************\n
+Choose An Action:`,
+        choices: [
+          "View All Departments",
+          "View All Roles",
+          "View All Employees",
+          "Add A Department",
+          "Add A Role",
+          "Add A Employee",
+          "Update Employee Role",
+        ],
+      },
+    ])
+    .then((answers) => {
+      switch (answers.choice) {
+        case "View All Departments":
+          viewDepartments();
+          break;
+        case "View All Roles":
+          viewRoles();
+          break;
+        case "View All Employees":
+          viewEmployees();
+          console.log("View Employees @ init");
+          break;
+        case "Add A Department":
+          addDepartment();
+          console.log("Add A Department @ init");
+          break;
+        case "Add A Role":
+          addRole();
+          console.log("Add A Role @ init");
+          break;
+        case "Add A Employee":
+          addEmployee();
+          console.log("Add A Employee @ init");
+          break;
+        case "Update Employee Role":
+          updateRole();
+          console.log("Update Emp Role @ init");
+          break;
+        default:
+          return "Please select an action. Cntrl-C to Quit";
+      }
+    });
+}
+
+// VIEW ALL DEPARTMENTS FUNCION:
+
+async function viewDepartments() {
+  const promise = new Promise((resolve, reject) => {
+    const db = mysql.createConnection({
+      host: "localhost",
+      user: "root",
+      password: "",
+      database: "employees_db",
+    });
+    db.query(
+      // "SELECT * FROM department",
+      'SELECT id AS "id", department AS "department" FROM department',
+      (err, result) => {
+        db.end();
+        if (err) {
+          console.log(err);
+
+          reject(err);
+        } else {
+          resolve(result);
+          // console.log(result);
+          Object.keys(result).forEach(function (key) {
+            var row = result[key];
+            console.log(row.id + ". " + row.department);
+          });
+        }
+      }
+    );
+  });
+  // return
+  await promise;
+  newAction();
+}
+// VIEW ALL ROLES FUNCTION:
+async function viewRoles() {
+  const promise = new Promise((resolve, reject) => {
+    const db = mysql.createConnection({
+      host: "localhost",
+      user: "root",
+      password: "",
+      database: "employees_db",
+    });
+    db.query(
+      // "SELECT * FROM department",
+      'SELECT id AS "id", title AS "role" FROM role',
+      (err, result) => {
+        db.end();
+        if (err) {
+          console.log(err);
+          reject(err);
+        } else {
+          resolve(result);
+          // console.log(result);
+          Object.keys(result).forEach(function (key) {
+            var row = result[key];
+            console.log(row.id + ". " + row.role);
+          });
+        }
+      }
+    );
+  });
+  // return
+  await promise;
+  newAction();
+}
+// VIEW ALL EMPLOYEES FUNCTION:
+
+async function viewEmployees() {
+  const promise = new Promise((resolve, reject) => {
+    const db = mysql.createConnection({
+      host: "localhost",
+      user: "root",
+      password: "",
+      database: "employees_db",
+    });
+    db.query(
+      'SELECT id AS "id", CONCAT(last_name, ", ", first_name) AS "name" FROM employee, role AS "role" FROM employee',
+      (err, result) => {
+        db.end();
+        if (err) {
+          console.log(err);
+          reject(err);
+        } else {
+          resolve(result);
+          // console.log(result);
+          Object.keys(result).forEach(function (key) {
+            var row = result[key];
+            console.log(row.id + ". " + row.name + " - " + row.role);
+          });
+        }
+      }
+    );
+  });
+  // return
+  await promise;
+  newAction();
+}
+
+// NEW ACTION FUNCTION - CHECKS WITH USER IF THEY WOULD LIKE TO MAKE ANOTHER ACTION or NEW Query.
+
+function newAction() {
+  inquirer
+    .prompt([
+      {
+        type: "list",
+        name: "choice",
+        message: `*^~-~^*^~-~^*^~--<O-^u^-O>\nMake Another Selection?`,
+        choices: ["Yes", "No Thanks, I'm Done Here"],
+      },
+    ])
+    .then((answers) => {
+      switch (answers.choice) {
+        case "Yes":
+          init();
+          break;
+        default:
+          return;
+          break;
+      }
+    });
+}
+
+init();
+//************************************************
+/*
 function createManager() {
   inquirer
     .prompt([
@@ -80,30 +262,6 @@ function createManager() {
       teamMembers.manager = manager;
       idArray.push(answers.managerId);
       createTeam();
-    });
-}
-
-function createTeam() {
-  inquirer
-    .prompt([
-      {
-        type: "list",
-        name: "choice",
-        message: "Which type of team member would you like to add",
-        choices: ["Engineer", "Intern", "I am done building my team"],
-      },
-    ])
-    .then((answers) => {
-      switch (answers.choice) {
-        case "Engineer":
-          addEngineer();
-          break;
-        case "Intern":
-          addIntern();
-          break;
-        default:
-          buildTeam();
-      }
     });
 }
 
@@ -223,12 +381,16 @@ function addIntern() {
     });
 }
 
-function buildTeam() {
-  fs.writeFile("dist/team.html", render(teamMembers), (err) => {
-    if (err) {
-      console.log(err);
-    }
-  });
-}
+// REPLACE WITH WRITE TO DATABASE??
+
+// function buildTeam() {
+//   fs.writeFile("dist/team.html", render(teamMembers), (err) => {
+//     if (err) {
+//       console.log(err);
+//     }
+//   });
+// }
 
 createManager();
+
+*/
