@@ -4,13 +4,15 @@ A SQL Based Employee Tracker using CLI Input, Node.js Express and Inquirer to ma
 
 # Description
 
+A MySql Database based employee tracking application that makes use of command line input prompts via express and inquirer packages. The user is able to look up information about employees, roles and departments, including department and role names, and employee role and salary. If new roles or departments are added, the user can add them to the database. Likewise, as new employees are added, they are added to the database and assigned a unique ID. Employee roles can be updated as they move positions around the company or get promotions.
+
 # Screenshot of command line interface input example:
 
 ![Screenshot  of command line interface input & file structure:](./assets/images/employee-tracker-screenshot.JPG)
 
 # Link to video screengrab of application in use:
 
-https://drive.google.com/file/d/1gC1PwLyFq21--cM9fuZCXWk0z6YeM1-T/view
+https://drive.google.com/file/d/1sGiB70UjJoiQhuzPM7xSG3bypnAVEjm0/view
 
 # Link to GitHub repository:
 
