@@ -151,7 +151,7 @@ async function viewEmployees() {
       database: "employees_db",
     });
     db.query(
-      'SELECT id AS "id", CONCAT(last_name, ", ", first_name) AS "name" FROM employee, role AS "role" FROM employee',
+      'SELECT id AS "id", CONCAT(last_name, ", ", first_name) AS "name", role AS "role" FROM employee',
       (err, result) => {
         db.end();
         if (err) {
@@ -173,7 +173,204 @@ async function viewEmployees() {
   newAction();
 }
 
-// NEW ACTION FUNCTION - CHECKS WITH USER IF THEY WOULD LIKE TO MAKE ANOTHER ACTION or NEW Query.
+async function addDepartment() {
+  const promise = new Promise((resolve, reject) => {
+    const db = mysql.createConnection({
+      host: "localhost",
+      user: "root",
+      password: "",
+      database: "employees_db",
+    });
+
+    let answer;
+
+    inquirer
+      .prompt([
+        {
+          type: "input",
+          name: "departmentName",
+          message: "What is the Name of the new Department?",
+          validate: (answer) => {
+            if (answer !== "") {
+              return true;
+            }
+            return "Must enter at least one character!";
+          },
+        },
+      ])
+
+      .then((answer) => {
+        console.log(answer.departmentName + " <--ANSWER at add department");
+        db.query(
+          `INSERT INTO department (department) VALUES ('${answer.departmentName}')`,
+          (err, result) => {
+            db.end();
+            if (err) {
+              console.log(err);
+              reject(err);
+            } else {
+              resolve(result);
+              console.log("Department Sucessfully Added!");
+            }
+          }
+        );
+      });
+  });
+  await promise;
+  newAction();
+}
+
+async function addRole() {
+  const promise = new Promise((resolve, reject) => {
+    const db = mysql.createConnection({
+      host: "localhost",
+      user: "root",
+      password: "",
+      database: "employees_db",
+    });
+
+    let answer;
+
+    inquirer
+      .prompt([
+        {
+          type: "input",
+          name: "roleName",
+          message: "What is the Name of the new Role?",
+          validate: (answer) => {
+            if (answer !== "") {
+              return true;
+            }
+            return "Must enter at least one character!";
+          },
+        },
+        {
+          type: "input",
+          name: "roleSalary",
+          message: "What is the Salary for the new Role?",
+          validate: (answer) => {
+            const pass = answer.match(/^[20000-200000]\d*$/);
+            if (pass) {
+              return true;
+            }
+            return "Please enter a whole number greater than 20000 and less than 200000 (no commas or punctuation please)";
+          },
+        },
+        {
+          type: "input",
+          name: "roleDept",
+          message: "What Department is the new Role in?",
+          validate: (answer) => {
+            const pass = answer.match(/^[0-19]\d*$/);
+            if (pass) {
+              /*VALIDATE IF DEPT ID EXISTS IN DEPT TABLE????*/
+              return true;
+            }
+            return "Please enter an existing Department number between 1 and 20.";
+          },
+        },
+      ])
+
+      .then((answer) => {
+        console.log(answer.roleName + " <--ANSWER at add Role");
+        db.query(
+          `INSERT INTO role (title, salary, department) VALUES ('${answer.roleName}', ${answer.roleSalary}, ${answer.roleDept})`,
+          (err, result) => {
+            db.end();
+            if (err) {
+              console.log(err);
+              reject(err);
+            } else {
+              resolve(result);
+              console.log("Role Sucessfully Added!");
+            }
+          }
+        );
+      });
+  });
+  await promise;
+  newAction();
+}
+
+async function addEmployee() {
+  const promise = new Promise((resolve, reject) => {
+    const db = mysql.createConnection({
+      host: "localhost",
+      user: "root",
+      password: "",
+      database: "employees_db",
+    });
+
+    let answer;
+
+    inquirer
+      .prompt([
+        {
+          type: "input",
+          name: "empFirstName",
+          message: "What is the new Employee's First Name?",
+          validate: (answer) => {
+            if (answer !== "") {
+              return true;
+            }
+            return "Must enter at least one character!";
+          },
+        },
+        {
+          type: "input",
+          name: "empLastName",
+          message: "What is the new Employee's Last Name?",
+          validate: (answer) => {
+            if (answer !== "") {
+              return true;
+            }
+            return "Must enter at least one character!";
+          },
+        },
+        {
+          type: "input",
+          name: "empRole",
+          message: "What is the new Employee's Role?",
+          validate: (answer) => {
+            const pass = answer.match(/^[0-19]\d*$/);
+            if (pass) {
+              /*VALIDATE IF DEPT ID EXISTS IN ROLE TABLE????*/
+              return true;
+            }
+            return "Please enter an existing role number between 1 and 20.";
+          },
+        },
+      ])
+
+      .then((answer) => {
+        console.log(
+          answer.empFirstName +
+            " " +
+            answer.empLastName +
+            " " +
+            answer.empRole +
+            " <--ANSWER at add Role"
+        );
+        db.query(
+          `INSERT INTO employee (first_name, last_Name, role) VALUES ('${answer.empFirstName}', '${answer.empLastName}', ${answer.empRole})`,
+          (err, result) => {
+            db.end();
+            if (err) {
+              console.log(err);
+              reject(err);
+            } else {
+              resolve(result);
+              console.log("Employee Sucessfully Added!");
+            }
+          }
+        );
+      });
+  });
+  await promise;
+  newAction();
+}
+
+// NEW ACTION FUNCTION - CHECKS WITH USER IF THEY WOULD LIKE TO MAKE ANOTHER ACTION OR NEW QUERY.
 
 function newAction() {
   inquirer
@@ -181,7 +378,7 @@ function newAction() {
       {
         type: "list",
         name: "choice",
-        message: `*^~-~^*^~-~^*^~--<O-^u^-O>\nMake Another Selection?`,
+        message: `\n*^~-~^*^~-~^*^~--<O-^u^-O>\n \nMake Another Selection?`,
         choices: ["Yes", "No Thanks, I'm Done Here"],
       },
     ])
