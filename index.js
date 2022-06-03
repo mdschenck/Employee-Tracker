@@ -1,18 +1,6 @@
-const Employee = require("./lib/Employee");
-// const Role = require("./lib/Role");
-// const Department = require("./lib/Department");
-
 const inquirer = require("inquirer");
 const fs = require("fs");
 const mysql = require("mysql2");
-
-// const teamMembers = {
-//   manager: null,
-//   engineers: [],
-//   interns: [],
-// };
-
-// const idArray = [,];
 
 // INIT function calls initial prompt on load and delegates functions based on input
 
@@ -24,7 +12,6 @@ function init() {
         name: "choice",
         message: `\n
 *******************************\n
-|        <O  -^u^-   O>       |\n
 |       EMPLOYEE TRACKER      |\n
 |         by: Michael S       |\n
 *******************************\n
@@ -50,23 +37,18 @@ Choose An Action:`,
           break;
         case "View All Employees":
           viewEmployees();
-          console.log("View Employees @ init");
           break;
         case "Add A Department":
           addDepartment();
-          console.log("Add A Department @ init");
           break;
         case "Add A Role":
           addRole();
-          console.log("Add A Role @ init");
           break;
         case "Add A Employee":
           addEmployee();
-          console.log("Add A Employee @ init");
           break;
         case "Update Employee Role":
           updateRole();
-          console.log("Update Emp Role @ init");
           break;
         default:
           return "Please select an action. Cntrl-C to Quit";
@@ -85,8 +67,7 @@ async function viewDepartments() {
       database: "employees_db",
     });
     db.query(
-      // "SELECT * FROM department",
-      'SELECT id AS "id", department AS "department" FROM department',
+      'SELECT dept_id AS "id", department AS "department" FROM department',
       (err, result) => {
         db.end();
         if (err) {
@@ -104,11 +85,12 @@ async function viewDepartments() {
       }
     );
   });
-  // return
   await promise;
   newAction();
 }
+
 // VIEW ALL ROLES FUNCTION:
+
 async function viewRoles() {
   const promise = new Promise((resolve, reject) => {
     const db = mysql.createConnection({
@@ -118,8 +100,7 @@ async function viewRoles() {
       database: "employees_db",
     });
     db.query(
-      // "SELECT * FROM department",
-      'SELECT id AS "id", title AS "role" FROM role',
+      'SELECT role_id AS "id", title AS "role" FROM role',
       (err, result) => {
         db.end();
         if (err) {
@@ -136,11 +117,11 @@ async function viewRoles() {
       }
     );
   });
-  // return
   await promise;
   newAction();
 }
-// VIEW ALL EMPLOYEES FUNCTION:
+
+// VIEW ALL EMPLOYEES FUNCTION - LISTS ALL EMPLOYEES NAMES, TITLES, SALARY & DEPARTMENT BY UTILIZING AND INNER JOIN FUNCTION TO DISPLAY EMPLOYEE INFORMATION FROM MULTIPLE TABLES.
 
 async function viewEmployees() {
   const promise = new Promise((resolve, reject) => {
@@ -151,8 +132,10 @@ async function viewEmployees() {
       database: "employees_db",
     });
     db.query(
-      'SELECT id AS "id", CONCAT(last_name, ", ", first_name) AS "name", role AS "role" FROM employee',
-      (err, result) => {
+      // 'SELECT employee.id AS "id", CONCAT(last_name, ", ", first_name) AS "name", role AS "role" FROM employee JOIN role ON employee.role = role.id',
+      "SELECT * FROM employee JOIN role ON employee.role = role.role_id JOIN department ON role.department = department.dept_id",
+
+      (err, result, fields) => {
         db.end();
         if (err) {
           console.log(err);
@@ -162,16 +145,29 @@ async function viewEmployees() {
           // console.log(result);
           Object.keys(result).forEach(function (key) {
             var row = result[key];
-            console.log(row.id + ". " + row.name + " - " + row.role);
+            console.log(
+              row.emp_id +
+                ". " +
+                row.last_name +
+                ", " +
+                row.first_name +
+                " - " +
+                row.title +
+                ", Salary: $" +
+                row.salary +
+                " Dept: " +
+                row.department
+            );
           });
         }
       }
     );
   });
-  // return
   await promise;
   newAction();
 }
+
+// ADD DEPARTMENT FUCTION - ADDS NEW DEPARTMENT
 
 async function addDepartment() {
   const promise = new Promise((resolve, reject) => {
@@ -200,7 +196,7 @@ async function addDepartment() {
       ])
 
       .then((answer) => {
-        console.log(answer.departmentName + " <--ANSWER at add department");
+        console.log("Adding new Department: " + answer.departmentName);
         db.query(
           `INSERT INTO department (department) VALUES ('${answer.departmentName}')`,
           (err, result) => {
@@ -220,6 +216,7 @@ async function addDepartment() {
   newAction();
 }
 
+// ADD ROLE FUNCTION - ADDS ROLE WITH ASSOCIATED SALARY AND DEPARTMENT INFO
 async function addRole() {
   const promise = new Promise((resolve, reject) => {
     const db = mysql.createConnection({
@@ -261,7 +258,8 @@ async function addRole() {
           name: "roleDept",
           message: "What Department is the new Role in?",
           validate: (answer) => {
-            const pass = answer.match(/^[0-19]\d*$/);
+            const pass = true;
+            // answer.match(/^[0-19]\d*$/);
             if (pass) {
               /*VALIDATE IF DEPT ID EXISTS IN DEPT TABLE????*/
               return true;
@@ -272,7 +270,7 @@ async function addRole() {
       ])
 
       .then((answer) => {
-        console.log(answer.roleName + " <--ANSWER at add Role");
+        console.log("Adding new Role: " + answer.roleName);
         db.query(
           `INSERT INTO role (title, salary, department) VALUES ('${answer.roleName}', ${answer.roleSalary}, ${answer.roleDept})`,
           (err, result) => {
@@ -291,6 +289,8 @@ async function addRole() {
   await promise;
   newAction();
 }
+
+//ADD EMPLOYEE FUNCTION - ADDS NEW EMPLOYEE & ASSIGNS ROLE
 
 async function addEmployee() {
   const promise = new Promise((resolve, reject) => {
@@ -332,7 +332,8 @@ async function addEmployee() {
           name: "empRole",
           message: "What is the new Employee's Role?",
           validate: (answer) => {
-            const pass = answer.match(/^[0-19]\d*$/);
+            const pass = true;
+            // answer.match(/^[0-19]\d*$/);
             if (pass) {
               /*VALIDATE IF DEPT ID EXISTS IN ROLE TABLE????*/
               return true;
@@ -344,12 +345,13 @@ async function addEmployee() {
 
       .then((answer) => {
         console.log(
-          answer.empFirstName +
+          "Adding Employee: " +
+            answer.empFirstName +
             " " +
             answer.empLastName +
             " " +
-            answer.empRole +
-            " <--ANSWER at add Role"
+            " Role: " +
+            answer.empRole
         );
         db.query(
           `INSERT INTO employee (first_name, last_Name, role) VALUES ('${answer.empFirstName}', '${answer.empLastName}', ${answer.empRole})`,
@@ -370,6 +372,107 @@ async function addEmployee() {
   newAction();
 }
 
+// UPDATE ROLE FUNCTION - UPDATES AN EMPLOYEE'S ROLE
+
+async function updateRole() {
+  console.log("Update Emp Role @ init");
+
+  const promise = new Promise((resolve, reject) => {
+    const db = mysql.createConnection({
+      host: "localhost",
+      user: "root",
+      password: "",
+      database: "employees_db",
+    });
+    db.query(
+      // 'SELECT employee.id AS "id", CONCAT(last_name, ", ", first_name) AS "name", role AS "role" FROM employee JOIN role ON employee.role = role.id',
+      "SELECT * FROM employee JOIN role ON employee.role = role.role_id JOIN department ON role.department = department.dept_id",
+
+      (err, result, fields) => {
+        db.end();
+        if (err) {
+          console.log(err);
+          reject(err);
+        } else {
+          resolve(result);
+          // console.log(result);
+          Object.keys(result).forEach(function (key) {
+            var row = result[key];
+            console.log(
+              row.emp_id + ". " + row.last_name + ", " + row.first_name
+            );
+          });
+        }
+      }
+    );
+  });
+  await promise;
+
+  const promise2 = new Promise((resolve, reject) => {
+    const db = mysql.createConnection({
+      host: "localhost",
+      user: "root",
+      password: "",
+      database: "employees_db",
+    });
+
+    let answer;
+
+    inquirer
+      .prompt([
+        {
+          type: "input",
+          name: "empToUpdate",
+          message:
+            "Which Employee's role would you like to change (Please enter the employee's ID Number)?",
+          validate: (answer) => {
+            const pass = true;
+            // answer.match(/^[0-19]\d*$/);
+            if (pass) {
+              /*VALIDATE IF EMP ID EXISTS IN EMP TABLE????*/
+              return true;
+            }
+            return "Please enter a valid employee number between 1 and 20.";
+          },
+        },
+        {
+          type: "input",
+          name: "newRole",
+          message:
+            "What is the Employee's New Role (Please enter an existing role number)?",
+          validate: (answer) => {
+            const pass = true;
+            // answer.match(/^[0-19]\d*$/);
+            if (pass) {
+              /*VALIDATE IF DEPT ID EXISTS IN ROLE TABLE????*/
+              return true;
+            }
+            return "Please enter an existing role number between 1 and 20.";
+          },
+        },
+      ])
+
+      .then((answer) => {
+        console.log("Updating Employee Role to: " + answer.newRole);
+        db.query(
+          `UPDATE employee SET role=${answer.newRole} WHERE emp_id=${answer.empToUpdate}`,
+          (err, result) => {
+            db.end();
+            if (err) {
+              console.log(err);
+              reject(err);
+            } else {
+              resolve(result);
+              console.log("Employee Role Sucessfully Updated!");
+            }
+          }
+        );
+      });
+  });
+  await promise2;
+  newAction();
+}
+
 // NEW ACTION FUNCTION - CHECKS WITH USER IF THEY WOULD LIKE TO MAKE ANOTHER ACTION OR NEW QUERY.
 
 function newAction() {
@@ -378,7 +481,7 @@ function newAction() {
       {
         type: "list",
         name: "choice",
-        message: `\n*^~-~^*^~-~^*^~--<O-^u^-O>\n \nMake Another Selection?`,
+        message: `\n------------------------------\n \nMake Another Selection?`,
         choices: ["Yes", "No Thanks, I'm Done Here"],
       },
     ])
@@ -395,199 +498,3 @@ function newAction() {
 }
 
 init();
-//************************************************
-/*
-function createManager() {
-  inquirer
-    .prompt([
-      {
-        type: "input",
-        name: "managerName",
-        message: "What is the Team Manager's Name?",
-        validate: (answer) => {
-          if (answer !== "") {
-            return true;
-          }
-          return "Must enter at least one character!";
-        },
-      },
-      {
-        type: "input",
-        name: "managerId",
-        message: "What is the team Manager's id",
-        validate: (answer) => {
-          const pass = answer.match(/^[1-9]\d*$/);
-          if (pass) {
-            return true;
-          }
-          return "Please enter a number greater than zero";
-        },
-      },
-      {
-        type: "input",
-        name: "managerEmail",
-        message: "What is the team Manager's email",
-        validate: (answer) => {
-          const pass = answer.match(/\S+@\S+\.\S+/);
-          if (pass) {
-            return true;
-          }
-          return "Please enter a valid email address";
-        },
-      },
-      {
-        type: "input",
-        name: "managerOfficeNumber",
-        message: "What is the team Manager's office number",
-        validate: (answer) => {
-          const pass = answer.match(/^[1-9]\d*$/);
-          if (pass) {
-            return true;
-          }
-          return "Please enter a number greater than zero";
-        },
-      },
-    ])
-    .then((answers) => {
-      const manager = new Manager(
-        answers.managerName,
-        answers.managerId,
-        answers.managerEmail,
-        answers.managerOfficeNumber
-      );
-
-      teamMembers.manager = manager;
-      idArray.push(answers.managerId);
-      createTeam();
-    });
-}
-
-function addEngineer() {
-  inquirer
-    .prompt([
-      {
-        type: "input",
-        name: "engineerName",
-        message: "What is the Engineer's Name?",
-        validate: (answer) => {
-          if (answer !== "") {
-            return true;
-          }
-          return "Must enter at least one character!";
-        },
-      },
-      {
-        type: "input",
-        name: "engineerId",
-        message: "What is the Engineer's id",
-        validate: (answer) => {
-          const pass = answer.match(/^[1-9]\d*$/);
-          if (pass) {
-            return true;
-          }
-          return "Please enter a number greater than zero";
-        },
-      },
-      {
-        type: "input",
-        name: "engineerEmail",
-        message: "What is the Engineer's email",
-        validate: (answer) => {
-          const pass = answer.match(/\S+@\S+\.\S+/);
-          if (pass) {
-            return true;
-          }
-          return "Please enter a valid email address";
-        },
-      },
-      {
-        type: "input",
-        name: "engineerGithub",
-        message: "What is the Engineer's github?",
-      },
-    ])
-    .then((answers) => {
-      const engineer = new Engineer(
-        answers.engineerName,
-        answers.engineerId,
-        answers.engineerEmail,
-        answers.engineerGithub
-      );
-
-      teamMembers.engineer = engineer;
-      idArray.push(answers.engineererId);
-      createTeam();
-    });
-}
-
-function addIntern() {
-  inquirer
-    .prompt([
-      {
-        type: "input",
-        name: "internName",
-        message: "What is the Intern's Name?",
-        validate: (answer) => {
-          if (answer !== "") {
-            return true;
-          }
-          return "Must enter at least one character!";
-        },
-      },
-      {
-        type: "input",
-        name: "internId",
-        message: "What is the Intern's id",
-        validate: (answer) => {
-          const pass = answer.match(/^[1-9]\d*$/);
-          if (pass) {
-            return true;
-          }
-          return "Please enter a number greater than zero";
-        },
-      },
-      {
-        type: "input",
-        name: "internEmail",
-        message: "What is the intern's email",
-        validate: (answer) => {
-          const pass = answer.match(/\S+@\S+\.\S+/);
-          if (pass) {
-            return true;
-          }
-          return "Please enter a valid email address";
-        },
-      },
-      {
-        type: "input",
-        name: "internSchool",
-        message: "What is the Intern's school?",
-      },
-    ])
-    .then((answers) => {
-      const intern = new Intern(
-        answers.internName,
-        answers.internId,
-        answers.internEmail,
-        answers.internschool
-      );
-
-      teamMembers.intern = intern;
-      idArray.push(answers.internId);
-      createTeam();
-    });
-}
-
-// REPLACE WITH WRITE TO DATABASE??
-
-// function buildTeam() {
-//   fs.writeFile("dist/team.html", render(teamMembers), (err) => {
-//     if (err) {
-//       console.log(err);
-//     }
-//   });
-// }
-
-createManager();
-
-*/
